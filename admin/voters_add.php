@@ -1,4 +1,5 @@
 <?php
+
 include 'includes/session.php';
 
 // AES encryption class
@@ -38,20 +39,36 @@ if (isset($_POST['add'])) {
     $filename = $_FILES['photo']['name'];
 
     if (!empty($filename)) {
-        move_uploaded_file($_FILES['photo']['tmp_name'], '../images/' . $filename);
+        // Validate file upload
+        $allowedExtensions = ['jpg', 'jpeg', 'png'];
+        $fileExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (in_array($fileExtension, $allowedExtensions)) {
+            if ($_FILES['photo']['size'] <= 2000000) { // Max size 2MB
+                move_uploaded_file($_FILES['photo']['tmp_name'], '../images/' . $filename);
+            } else {
+                $_SESSION['error'] = 'File size is too large. Max 2MB.';
+            }
+        } else {
+            $_SESSION['error'] = 'Invalid file type. Only JPG, JPEG, and PNG allowed.';
+        }
     }
 
     // Generate random voters ID
     $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $voter = substr(str_shuffle($set), 0, 15);
+    do {
+        $voter = substr(str_shuffle($set), 0, 15);
+        $sql_check = "SELECT * FROM voters WHERE voters_id = '$voter'";
+        $result = $conn->query($sql_check);
+    } while ($result->num_rows > 0);
 
     // Insert encrypted data into the database
-    $sql = "INSERT INTO voters (voters_id, password, firstname, lastname, photo, voterid, dob) VALUES ('$voter', '$password', '$firstname', '$lastname', '$filename', '$voterid', '$dob')";
+    $sql = "INSERT INTO voters (voters_id, password, firstname, lastname, photo, voterid, dob) 
+            VALUES ('$voter', '$password', '$firstname', '$lastname', '$filename', '$voterid', '$dob')";
 
     if ($conn->query($sql)) {
         $_SESSION['success'] = 'Voter added successfully';
     } else {
-        $_SESSION['error'] = $conn->error;
+        $_SESSION['error'] = 'Error: ' . $conn->error . ' - Query: ' . $sql;
     }
 } else {
     $_SESSION['error'] = 'Fill up add form first';
