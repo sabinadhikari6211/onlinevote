@@ -9,7 +9,6 @@ class AES {
     public function __construct($key) {
         $this->key = $key;
     }
-
     // Encrypt a string using AES
     public function encrypt($data) {
         $iv = random_bytes(16); // Generate a random IV
@@ -25,9 +24,8 @@ class AES {
         return openssl_decrypt($encrypted, 'aes-256-cbc', $this->key, OPENSSL_RAW_DATA, $iv);
     }
 }
-
 // AES key
-$aesKey = 'sabin'; // Replace with a secure 32-byte key
+$aesKey = 'sabin'; 
 $aes = new AES($aesKey);
 
 if (isset($_POST['add'])) {
@@ -37,7 +35,6 @@ if (isset($_POST['add'])) {
     $dob = $aes->encrypt($_POST['dob']);             // Encrypt date of birth
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $filename = $_FILES['photo']['name'];
-
     if (!empty($filename)) {
         // Validate file upload
         $allowedExtensions = ['jpg', 'jpeg', 'png'];
@@ -52,14 +49,24 @@ if (isset($_POST['add'])) {
             $_SESSION['error'] = 'Invalid file type. Only JPG, JPEG, and PNG allowed.';
         }
     }
+    // Generate random voters ID Algorithm
+    function generateVoterID() {
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $length = 7; // Voter ID length
+        $voterID = '';
+        for ($i = 0; $i < $length; $i++) {
+            $voterID .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+        
+        return $voterID;
+    }
 
-    // Generate random voters ID
-    $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    // Ensure unique voter ID in database
     do {
-        $voter = substr(str_shuffle($set), 0, 15);
+        $voter = generateVoterID();
         $sql_check = "SELECT * FROM voters WHERE voters_id = '$voter'";
-        $result = $conn->query($sql_check);
-    } while ($result->num_rows > 0);
+        $result_check = $conn->query($sql_check);
+    } while ($result_check->num_rows > 0);
 
     // Insert encrypted data into the database
     $sql = "INSERT INTO voters (voters_id, password, firstname, lastname, photo, voterid, dob) 

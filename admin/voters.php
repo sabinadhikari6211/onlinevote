@@ -4,11 +4,10 @@ include 'includes/AES.php';
 include 'includes/session.php';
 include 'includes/header.php';
 
-// Set the AES key (should be 32 bytes long)
-$aesKey = 'sabin'; // Replace with your actual key
+
+$aesKey = 'sabin'; 
 $aes = new AES($aesKey);
 
-// Connect to the database (make sure $conn is already defined in session.php)
 ?>
 
 <body class="hold-transition skin-blue sidebar-mini">
